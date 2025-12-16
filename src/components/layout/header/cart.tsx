@@ -18,7 +18,12 @@ export function CartButton({ cartOpen, setCartOpen }: CartButtonProps) {
   return (
     <Sheet open={cartOpen} onOpenChange={setCartOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline" size="icon" aria-label="cart">
+        <Button
+          variant="outline"
+          size="icon"
+          aria-label="cart"
+          className="cursor-pointer"
+        >
           <ShoppingCart className="h-4 w-4" />
         </Button>
       </SheetTrigger>

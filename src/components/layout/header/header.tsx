@@ -7,10 +7,11 @@ import { ModeToggle } from "../../theme/theme-toggle";
 import { useState } from "react";
 
 import { CartButton } from "./cart";
-import { GoogleSignInButton } from "./auth";
 import { MobileMenu } from "./menu";
 import { Navigation } from "./navigation";
 import { Logo } from "@/components/ui/logo";
+
+import Profile from "./profile";
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -30,16 +31,18 @@ export function Header() {
           {/* Right: Actions */}
 
           <div className="flex items-center gap-2">
-            {/* Google Sign In - Desktop Only */}
-            <GoogleSignInButton className="hidden md:flex" />
+            {/* Cart */}
+            <CartButton cartOpen={cartOpen} setCartOpen={setCartOpen} />
 
             {/* Mode Toggle - Desktop Only */}
             <div className="hidden md:block">
               <ModeToggle />
             </div>
 
-            {/* Cart */}
-            <CartButton cartOpen={cartOpen} setCartOpen={setCartOpen} />
+            {/* Profile - Desktop Only */}
+            <div className="hidden md:flex">
+              <Profile />
+            </div>
 
             {/* Mobile Menu */}
             <MobileMenu mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />

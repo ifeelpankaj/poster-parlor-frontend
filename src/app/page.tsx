@@ -11,7 +11,6 @@ export default function Home() {
   return (
     <>
       <Header />
-
       <PosterBannerCarousel />
       <Category />
       <PremiumCollection />
