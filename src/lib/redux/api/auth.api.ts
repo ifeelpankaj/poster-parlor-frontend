@@ -1,52 +1,6 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import type {
-  BaseQueryFn,
-  FetchArgs,
-  FetchBaseQueryError,
-} from "@reduxjs/toolkit/query";
+import { createApi } from "@reduxjs/toolkit/query/react";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-
-const baseQuery = fetchBaseQuery({
-  baseUrl: API_BASE_URL,
-  credentials: "include", // ✅ This sends cookies automatically
-  prepareHeaders: (headers) => {
-    return headers;
-  },
-});
-
-const baseQueryWithReauth: BaseQueryFn<
-  string | FetchArgs,
-  unknown,
-  FetchBaseQueryError
-> = async (args, api, extraOptions) => {
-  let result = await baseQuery(args, api, extraOptions);
-
-  // If we get a 401 error, try to refresh the token
-  if (result.error && result.error.status === 401) {
-    // console.log("Access token expired, attempting refresh...");
-
-    // Try to refresh - cookies are sent automatically
-    const refreshResult = await baseQuery(
-      { url: "/auth/google/refresh", method: "POST" },
-      api,
-      extraOptions
-    );
-
-    if (refreshResult.data) {
-      // console.log("Token refreshed successfully");
-      // ✅ No need to store anything - backend sets cookies
-      // Retry the original request
-      result = await baseQuery(args, api, extraOptions);
-    } else {
-      // console.log("Refresh failed, user needs to re-authenticate");
-      // ✅ Refresh failed - dispatch logout action
-      api.dispatch({ type: "auth/clearAuth" });
-    }
-  }
-
-  return result;
-};
+import { baseQueryWithReauth, resetRefreshState } from "./base.query";
 
 export const authApi = createApi({
   reducerPath: "authApi",
@@ -60,6 +14,16 @@ export const authApi = createApi({
         body: { idToken },
       }),
       invalidatesTags: ["User"],
+      async onQueryStarted(_, { queryFulfilled }) {
+        try {
+          await queryFulfilled;
+
+          // ✅ LOGIN SUCCESS → reset refresh cache
+          resetRefreshState();
+        } catch {
+          // login failed → do nothing
+        }
+      },
     }),
 
     refreshToken: builder.mutation({
@@ -82,6 +46,9 @@ export const authApi = createApi({
           dispatch({ type: "auth/clearAuth" });
         } catch (error) {
           console.error("Logout failed:", error);
+        } finally {
+          // ✅ LOGOUT → reset everything
+          resetRefreshState();
         }
       },
     }),

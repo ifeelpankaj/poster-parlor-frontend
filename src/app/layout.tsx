@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { ReduxProvider } from "@/components/providers/redux-provider";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { Toaster } from "sonner";
+import { Header } from "@/components/layout/header/header";
 
 const robotoMono = Roboto_Mono({
   variable: "--font-mono",
@@ -28,6 +29,7 @@ export default function RootLayout({
         <ReduxProvider>
           <AuthProvider>
             <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+              <Header />
               {children}
               <Toaster />
             </ThemeProvider>

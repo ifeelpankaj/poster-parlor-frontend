@@ -18,7 +18,7 @@ import { useRouter } from "next/navigation";
 import { GoogleSignInButton } from "./auth";
 import { useAppSelector } from "@/lib/redux/store";
 import { toast } from "sonner";
-import { ErrorResponse } from "@/lib/redux/types/api-response.type";
+import { ErrorResponse } from "@/lib/types/api-response.type";
 
 export default function Profile() {
   const router = useRouter();

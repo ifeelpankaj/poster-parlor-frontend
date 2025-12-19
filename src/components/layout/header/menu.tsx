@@ -12,7 +12,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { GoogleSignInButton } from "./auth";
 import { ModeToggle } from "@/components/theme/theme-toggle";
-import { MobileMenuProps } from "@/lib/redux/types/all-types";
+import { MobileMenuProps } from "@/lib/types/all-types";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   useLazyGetCurrentUserQuery,
@@ -20,7 +20,7 @@ import {
 } from "@/lib/redux/api/auth.api";
 import { useAppSelector } from "@/lib/redux/store";
 import { toast } from "sonner";
-import { ErrorResponse } from "@/lib/redux/types/api-response.type";
+import { ErrorResponse } from "@/lib/types/api-response.type";
 import { useEffect } from "react";
 
 export function MobileMenu({ mobileOpen, setMobileOpen }: MobileMenuProps) {

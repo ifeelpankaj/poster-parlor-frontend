@@ -5,12 +5,9 @@ import OurServices from "@/components/home/services";
 import TestimonialQueue from "@/components/home/testimonial-queue";
 import Footer from "@/components/layout/footer/footer";
 
-import { Header } from "@/components/layout/header/header";
-
 export default function Home() {
   return (
     <>
-      <Header />
       <PosterBannerCarousel />
       <Category />
       <PremiumCollection />

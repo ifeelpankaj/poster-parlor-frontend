@@ -2,104 +2,54 @@
 
 import { titleFont } from "@/app/fonts";
 import { PosterCard } from "../ui/poster-card";
+import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
+import {
+  Poster,
+  useGetFeaturedPostersQuery,
+} from "@/lib/redux/api/inventory.api";
 
-// --- MOCK DATA HERE ---
-const featuredPosters = [
-  {
-    _id: "p1",
-    title: "Luffy Gear 5 – Anime Poster",
-    price: 299,
-    stock: 12,
-    isAvailable: true,
-    category: "Anime",
-    dimensions: "12 x 18 inches",
-    tags: ["anime", "luffy", "one piece"],
-    images: [
-      {
-        url: "https://res.cloudinary.com/buymybook/image/upload/v1764486496/Posters/Luffy_htrg0a.jpg",
-      },
-    ],
-  },
-  {
-    _id: "p2",
-    title: "Ducati Monster – Bike Poster",
-    price: 349,
-    stock: 5,
-    isAvailable: true,
-    category: "Bikes",
-    dimensions: "12 x 18 inches",
-    tags: ["bike", "racing", "ducati"],
-    images: [
-      {
-        url: "https://res.cloudinary.com/buymybook/image/upload/v1764569307/Posters/bike_650_brhsbn.jpg",
-      },
-    ],
-  },
-  {
-    _id: "p3",
-    title: "Land Rover Defender OCTA – Car Poster",
-    price: 399,
-    stock: 0,
-    isAvailable: false,
-    category: "Cars",
-    dimensions: "18 x 24 inches",
-    tags: ["car", "defender", "luxury"],
-    images: [
-      {
-        url: "https://res.cloudinary.com/buymybook/image/upload/v1764486496/Posters/DEFENDER_OCTA_tlumso.jpg",
-      },
-    ],
-  },
-  {
-    _id: "p4",
-    title: "Lord Shiva Trance – Divine Poster",
-    price: 249,
-    stock: 20,
-    isAvailable: true,
-    category: "Divine",
-    dimensions: "12 x 18 inches",
-    tags: ["shiva", "divine", "spiritual"],
-    images: [
-      {
-        url: "https://res.cloudinary.com/buymybook/image/upload/v1764486496/Posters/Lord_Shiva_Wallpaper_dlj9i0.jpg",
-      },
-    ],
-  },
-  {
-    _id: "p5",
-    title: "Spiderman Neon – Marvel Poster",
-    price: 329,
-    stock: 7,
-    isAvailable: true,
-    category: "Marvel",
-    dimensions: "12 x 18 inches",
-    tags: ["spiderman", "marvel", "superhero"],
-    images: [
-      {
-        url: "https://res.cloudinary.com/buymybook/image/upload/v1764569307/Posters/spiderman_s29bir.jpg",
-      },
-    ],
-  },
-  {
-    _id: "p6",
-    title: "Cristiano Ronaldo CR7 – Football Poster",
-    price: 279,
-    stock: 3,
-    isAvailable: true,
-    category: "Sports",
-    dimensions: "18 x 24 inches",
-    tags: ["football", "cr7", "sports"],
-    images: [
-      {
-        url: "https://res.cloudinary.com/buymybook/image/upload/v1764486496/Posters/Ronaldo_T-shirt_Design_Football_PNG_Download_Cristiano_Ronaldo_CR7_Football_Shirt_Png_T-shirt_Sublimation__-_Etsy_j0p8sf.jpg",
-      },
-    ],
-  },
-];
-
-// --- COMPONENT ---
 export function PremiumCollection() {
+  const { data: featuredPostersData, isLoading } = useGetFeaturedPostersQuery(
+    {}
+  );
+
+  const featuredPosters: Poster[] = featuredPostersData?.data;
+
+  if (isLoading) {
+    return (
+      <section className="py-8 md:py-12">
+        <div className="w-full px-6 sm:px-6 lg:px-8">
+          {/* Section Header Skeleton */}
+          <div className="mb-6 md:mb-10 flex flex-col items-center text-center">
+            <Skeleton className="h-9 md:h-10 w-48 md:w-64 mb-3" />
+            <Skeleton className="h-4 w-64 md:w-96" />
+          </div>
+
+          {/* Grid Skeleton */}
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-4 lg:gap-5">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <div key={i} className="space-y-3">
+                <Skeleton className="w-full aspect-[3/4] rounded-lg" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </div>
+            ))}
+          </div>
+
+          {/* Button Skeleton */}
+          <div className="mt-8 md:mt-10 flex justify-center">
+            <Skeleton className="h-12 w-48 rounded-lg" />
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!featuredPosters || featuredPosters.length === 0) {
+    return null;
+  }
+
   return (
     <section className="py-8 md:py-12">
       <div className="w-full px-6 sm:px-6 lg:px-8">

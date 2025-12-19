@@ -1,6 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-import { AuthInitialState } from "../types/api-response.type";
+import { AuthInitialState } from "../../types/api-response.type";
 import { authApi } from "../api/auth.api";
 
 const initialState: AuthInitialState = {

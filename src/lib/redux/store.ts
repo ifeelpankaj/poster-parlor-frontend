@@ -5,17 +5,21 @@ import { setupListeners } from "@reduxjs/toolkit/query";
 import authReducer from "./slice/auth.slice";
 import cartReducer from "./slice/cart.slice";
 import { authApi } from "./api/auth.api";
+import { inventoryApi } from "./api/inventory.api";
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     cart: cartReducer,
     [authApi.reducerPath]: authApi.reducer,
+    [inventoryApi.reducerPath]: inventoryApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: false,
-    }).concat(authApi.middleware),
+    })
+      .concat(authApi.middleware)
+      .concat(inventoryApi.middleware),
 });
 
 // Enable refetchOnFocus and refetchOnReconnect behaviors
