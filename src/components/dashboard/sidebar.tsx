@@ -2,9 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import {
-  BarChart3,
   Package,
-  Settings,
   ShoppingCart,
   Users,
   LayoutDashboard,
@@ -34,16 +32,6 @@ const menuItems = [
     icon: Users,
     label: "Customers",
     href: "/dashboard/customers",
-  },
-  {
-    icon: BarChart3,
-    label: "Analytics",
-    href: "/dashboard/analytics",
-  },
-  {
-    icon: Settings,
-    label: "Settings",
-    href: "/dashboard/settings",
   },
 ];
 

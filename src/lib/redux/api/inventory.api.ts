@@ -1,5 +1,5 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
-import { baseQuery } from "./base.query";
+import { baseQueryWithReauth } from "./base.query";
 
 export interface PosterImage {
   _id: string;
@@ -46,9 +46,7 @@ export interface GetFeaturedPostersResponse {
   data: Array<Poster[]>;
 }
 export interface GetInventoryItemResponse {
-  data: {
-    poster: Poster;
-  };
+  data: Poster;
 }
 
 export interface SearchInventoryResponse {
@@ -79,9 +77,14 @@ export interface DeleteInventoryResponse {
   message: string;
 }
 
+export interface CategoryWithCount {
+  category: string;
+  count: number;
+}
+
 export interface FiltersResponse {
   data: {
-    categories: string[];
+    categories: CategoryWithCount[];
     materials: string[];
     dimensions: string[];
     tags: string[];
@@ -138,7 +141,7 @@ export interface UpdateInventoryItemParams {
     isAvailable: boolean;
     tags: string[];
     material: string;
-    imagesToRemove: string[];
+    imagesToDelete: string[];
   }>;
 }
 
@@ -153,7 +156,7 @@ export interface SearchInventoryParams {
 
 export const inventoryApi = createApi({
   reducerPath: "inventoryApi",
-  baseQuery: baseQuery,
+  baseQuery: baseQueryWithReauth,
   tagTypes: ["Inventory", "Filters"],
   endpoints: (builder) => ({
     // Create inventory item
@@ -181,7 +184,7 @@ export const inventoryApi = createApi({
         });
 
         return {
-          url: "",
+          url: "/inventory",
           method: "POST",
           body: formData,
         };
@@ -312,7 +315,7 @@ export const inventoryApi = createApi({
         });
 
         return {
-          url: `/${id}`,
+          url: `/inventory/${id}`,
           method: "PUT",
           body: formData,
         };
@@ -351,7 +354,7 @@ export const inventoryApi = createApi({
     // Soft delete inventory item
     softDeleteInventoryItem: builder.mutation<DeleteInventoryResponse, string>({
       query: (id) => ({
-        url: `/${id}`,
+        url: `/inventory/${id}`,
         method: "DELETE",
       }),
       transformResponse: (response: DeleteInventoryResponse) => {
@@ -371,7 +374,7 @@ export const inventoryApi = createApi({
     // Hard delete inventory item
     deleteInventoryItem: builder.mutation<DeleteInventoryResponse, string>({
       query: (id) => ({
-        url: `/${id}/hard`,
+        url: `/inventory/${id}/hard`,
         method: "DELETE",
       }),
       transformResponse: (response: DeleteInventoryResponse) => {

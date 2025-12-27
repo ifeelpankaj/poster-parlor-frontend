@@ -6,6 +6,9 @@ import authReducer from "./slice/auth.slice";
 import cartReducer from "./slice/cart.slice";
 import { authApi } from "./api/auth.api";
 import { inventoryApi } from "./api/inventory.api";
+import { orderApi } from "./api/order.api";
+import { adminApi } from "./api/admin.api";
+import { reviewApi } from "./api/review.api";
 
 export const store = configureStore({
   reducer: {
@@ -13,13 +16,19 @@ export const store = configureStore({
     cart: cartReducer,
     [authApi.reducerPath]: authApi.reducer,
     [inventoryApi.reducerPath]: inventoryApi.reducer,
+    [orderApi.reducerPath]: orderApi.reducer,
+    [adminApi.reducerPath]: adminApi.reducer,
+    [reviewApi.reducerPath]: reviewApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: false,
     })
       .concat(authApi.middleware)
-      .concat(inventoryApi.middleware),
+      .concat(inventoryApi.middleware)
+      .concat(orderApi.middleware)
+      .concat(adminApi.middleware)
+      .concat(reviewApi.middleware),
 });
 
 // Enable refetchOnFocus and refetchOnReconnect behaviors

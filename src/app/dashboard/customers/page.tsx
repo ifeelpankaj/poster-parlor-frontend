@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -21,110 +20,82 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Plus, Search } from "lucide-react";
+  Search,
+  Users,
+  RefreshCw,
+  Mail,
+  Calendar,
+  ShoppingBag,
+} from "lucide-react";
+import { useGetCustomersQuery } from "@/lib/redux/api/admin.api";
 
-const allCustomers = [
-  {
-    id: 1,
-    name: "John Anderson",
-    email: "john@example.com",
-    phone: "+1 (555) 123-4567",
-    city: "New York",
-    orders: 12,
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Sarah Smith",
-    email: "sarah@example.com",
-    phone: "+1 (555) 234-5678",
-    city: "Los Angeles",
-    orders: 8,
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Michael Johnson",
-    email: "michael@example.com",
-    phone: "+1 (555) 345-6789",
-    city: "Chicago",
-    orders: 0,
-    status: "Inactive",
-  },
-  {
-    id: 4,
-    name: "Emily Brown",
-    email: "emily@example.com",
-    phone: "+1 (555) 456-7890",
-    city: "Houston",
-    orders: 15,
-    status: "Active",
-  },
-  {
-    id: 5,
-    name: "David Wilson",
-    email: "david@example.com",
-    phone: "+1 (555) 567-8901",
-    city: "Phoenix",
-    orders: 5,
-    status: "Active",
-  },
-  {
-    id: 6,
-    name: "Lisa Martinez",
-    email: "lisa@example.com",
-    phone: "+1 (555) 678-9012",
-    city: "Miami",
-    orders: 9,
-    status: "Active",
-  },
-  {
-    id: 7,
-    name: "James Davis",
-    email: "james@example.com",
-    phone: "+1 (555) 789-0123",
-    city: "Denver",
-    orders: 0,
-    status: "Inactive",
-  },
-  {
-    id: 8,
-    name: "Jennifer Lee",
-    email: "jennifer@example.com",
-    phone: "+1 (555) 890-1234",
-    city: "Seattle",
-    orders: 20,
-    status: "Active",
-  },
-];
+const ITEMS_PER_PAGE = 10;
 
-const ITEMS_PER_PAGE = 5;
+// Helper function to format date as relative time
+function formatRelativeTime(date: Date): string {
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diffInSeconds < 60) return "just now";
+  if (diffInSeconds < 3600)
+    return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+  if (diffInSeconds < 86400)
+    return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+  if (diffInSeconds < 2592000)
+    return `${Math.floor(diffInSeconds / 86400)} days ago`;
+  if (diffInSeconds < 31536000)
+    return `${Math.floor(diffInSeconds / 2592000)} months ago`;
+  return `${Math.floor(diffInSeconds / 31536000)} years ago`;
+}
 
 export default function CustomersPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const filteredCustomers = allCustomers.filter((customer) => {
-    const matchesSearch =
-      customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      customer.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || customer.status === statusFilter;
-    return matchesSearch && matchesStatus;
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setCurrentPage(1);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const { data, isLoading, error, refetch, isFetching } = useGetCustomersQuery({
+    page: currentPage,
+    limit: ITEMS_PER_PAGE,
+    search: debouncedSearch || undefined,
   });
 
-  const totalPages = Math.ceil(filteredCustomers.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const paginatedCustomers = filteredCustomers.slice(startIndex, endIndex);
+  const customers = data?.data?.customers || [];
+  const pagination = data?.data?.pagination;
+  const totalPages = pagination?.totalPages || 1;
+  const totalCustomers = pagination?.totalCustomers || 0;
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <p className="text-destructive">Failed to load customers</p>
+        <Button onClick={() => refetch()} variant="outline">
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Retry
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -136,112 +107,131 @@ export default function CustomersPage() {
             Manage your customer base
           </p>
         </div>
-        <Button className="gap-2 bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200">
-          <Plus className="h-4 w-4" />
-          Add Customer
+        <Button
+          onClick={() => refetch()}
+          variant="outline"
+          disabled={isFetching}
+        >
+          <RefreshCw
+            className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`}
+          />
+          Refresh
         </Button>
       </div>
 
-      {/* Filters and Search */}
-      <Card className="bg-gray-50 dark:bg-slate-900 border-gray-200 dark:border-gray-800">
+      {/* Search */}
+      <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             {/* Search Bar */}
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search customers by name or email..."
-                className="pl-10 bg-white dark:bg-slate-800 border-gray-300 dark:border-gray-700"
+                className="pl-10"
                 value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setCurrentPage(1);
-                }}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-
-            {/* Status Filter */}
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-48 bg-white dark:bg-slate-800 border-gray-300 dark:border-gray-700">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Customers</SelectItem>
-                <SelectItem value="Active">Active</SelectItem>
-                <SelectItem value="Inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </CardContent>
       </Card>
 
       {/* Customers Table */}
-      <Card className="border-gray-200 dark:border-gray-800">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-lg">
-            Customers ({filteredCustomers.length})
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Customers ({totalCustomers})
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-gray-200 dark:border-gray-800">
-                  <TableHead className="text-gray-700 dark:text-gray-300">
-                    Name
-                  </TableHead>
-                  <TableHead className="text-gray-700 dark:text-gray-300">
-                    Email
-                  </TableHead>
-                  <TableHead className="text-gray-700 dark:text-gray-300">
-                    City
-                  </TableHead>
-                  <TableHead className="text-gray-700 dark:text-gray-300">
-                    Orders
-                  </TableHead>
-                  <TableHead className="text-gray-700 dark:text-gray-300">
-                    Status
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedCustomers.map((customer) => (
-                  <TableRow
-                    key={customer.id}
-                    className="border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-slate-800/50"
-                  >
-                    <TableCell className="font-medium text-gray-900 dark:text-white">
-                      {customer.name}
-                    </TableCell>
-                    <TableCell className="text-gray-700 dark:text-gray-300">
-                      {customer.email}
-                    </TableCell>
-                    <TableCell className="text-gray-700 dark:text-gray-300">
-                      {customer.city}
-                    </TableCell>
-                    <TableCell className="text-gray-900 dark:text-white font-semibold">
-                      {customer.orders}
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                          customer.status === "Active"
-                            ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400"
-                            : "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-400"
-                        }`}
-                      >
-                        {customer.status}
-                      </span>
-                    </TableCell>
+          {isLoading ? (
+            <div className="space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))}
+            </div>
+          ) : customers.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No customers found</p>
+              {debouncedSearch && (
+                <p className="text-sm mt-2">Try adjusting your search</p>
+              )}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead className="text-center">Orders</TableHead>
+                    <TableHead className="text-right">Total Spent</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Joined</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          {paginatedCustomers.length === 0 && (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              No customers found
+                </TableHeader>
+                <TableBody>
+                  {customers.map((customer) => (
+                    <TableRow key={customer._id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <span className="text-sm font-semibold text-primary">
+                              {customer.name?.charAt(0)?.toUpperCase() || "U"}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-medium">
+                              {customer.name || "Unknown"}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {customer.role}
+                            </p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">{customer.email}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <ShoppingBag className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-semibold">
+                            {customer.orderCount}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-semibold">
+                        {formatCurrency(customer.totalSpent)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={customer.isActive ? "default" : "secondary"}
+                          className={
+                            customer.isActive
+                              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                              : ""
+                          }
+                        >
+                          {customer.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Calendar className="h-4 w-4" />
+                          {formatRelativeTime(new Date(customer.createdAt))}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>

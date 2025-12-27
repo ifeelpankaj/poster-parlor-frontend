@@ -11,3 +11,4 @@ export * from "./quantity-selector";
 export * from "./add-to-cart-button";
 export * from "./product-features";
 export * from "./reviews-section";
+export * from "./review-form";

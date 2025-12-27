@@ -1,6 +1,7 @@
 "use client";
 import { useState, useSyncExternalStore } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   Sheet,
   SheetContent,
@@ -11,7 +12,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "../../ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+
 import {
   ShoppingCart,
   Minus,
@@ -196,6 +197,7 @@ const PaginationControls = ({
 export function CartButton({ cartOpen, setCartOpen }: CartButtonProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const isClient = useIsClient();
+  const router = useRouter();
   const {
     items,
     totalItems,
@@ -289,26 +291,13 @@ export function CartButton({ cartOpen, setCartOpen }: CartButtonProps) {
               <div className="w-full space-y-4">
                 {/* Order Summary */}
                 <div className="space-y-2">
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Subtotal</span>
-                    <span>₹{subtotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Shipping</span>
-                    <span className="text-green-600 dark:text-green-400">
-                      {subtotal >= 250 ? "Free" : "₹50.00"}
-                    </span>
-                  </div>
-                  <Separator className="my-2" />
                   <div className="flex justify-between text-base sm:text-lg font-bold text-foreground">
                     <span>Total</span>
-                    <span>
-                      ₹{(subtotal >= 250 ? subtotal : subtotal + 50).toFixed(2)}
-                    </span>
+                    <span>₹{subtotal.toFixed(2)}</span>
                   </div>
-                  {subtotal < 250 && (
+                  {subtotal < 500 && (
                     <p className="text-xs text-muted-foreground text-center">
-                      Add ₹{(250 - subtotal).toFixed(2)} more for free shipping!
+                      Add ₹{(500 - subtotal).toFixed(2)} more for free shipping!
                     </p>
                   )}
                 </div>
@@ -318,6 +307,10 @@ export function CartButton({ cartOpen, setCartOpen }: CartButtonProps) {
                   <Button
                     size="lg"
                     className="w-full font-semibold text-sm sm:text-base"
+                    onClick={() => {
+                      setCartOpen(false);
+                      router.push("/checkout");
+                    }}
                   >
                     Proceed to Checkout
                   </Button>

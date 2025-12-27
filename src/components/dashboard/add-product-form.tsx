@@ -1,55 +1,80 @@
 "use client";
 
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import {
+  useCreateInventoryItemMutation,
+  useUpdateInventoryItemMutation,
+  useGetInventoryItemByIdQuery,
+} from "@/lib/redux/api/inventory.api";
+import { toast } from "sonner";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, CloudCog, Upload, X } from "lucide-react";
-import { useAddInventoryItemMutation } from "@/lib/redux/api/admin.api";
-import { toast } from "sonner";
+import { Upload, X, Loader2, ArrowLeft } from "lucide-react";
 
 interface ImagePreview {
-  file: File;
+  file?: File;
   preview: string;
+  isExisting?: boolean;
+  public_id?: string;
 }
 
 interface FormData {
   title: string;
   description: string;
-  price: number | "";
+  price: string;
   dimensions: string;
   material: string;
-  stock: number | "";
+  stock: string;
   category: string;
   isAvailable: boolean;
   tags: string[];
 }
 
-const CATEGORIES = ["Anime", "Bikes", "Cars", "Divine", "Marvel", "Sports"];
-
-const MATERIALS = [
-  "Paper",
-  "Canvas",
-  "Poster Board",
-  "Vinyl",
-  "Acrylic",
-  "Wood",
+const CATEGORIES = [
+  "Abstract",
+  "Anime",
+  "Cartoon",
+  "Floral",
+  "Grunge",
+  "Landscapes",
+  "Minimalist",
+  "Motivational",
+  "Music",
+  "Nature",
+  "Retro",
+  "Sports",
+  "Typography",
+  "Vintage",
 ];
 
-const DIMENSIONS = [
-  "8x10 inches",
-  "11x14 inches",
-  "16x20 inches",
-  "18x24 inches",
-  "24x36 inches",
-  "27x40 inches",
-];
+const MATERIALS = ["Premium Paper", "Canvas", "Matte Paper", "Glossy Paper"];
+
+const DIMENSIONS = ["12x18", "18x24", "24x36", "16x20", "20x30"];
 
 export function AddProductForm() {
-  const [addInventoryItem, { isLoading: isSubmitting }] =
-    useAddInventoryItemMutation();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("edit");
+  const isEditMode = !!editId;
+
+  // API hooks
+  const [createInventoryItem, { isLoading: isCreating }] =
+    useCreateInventoryItemMutation();
+  const [updateInventoryItem, { isLoading: isUpdating }] =
+    useUpdateInventoryItemMutation();
+
+  // Fetch existing product if in edit mode
+  const {
+    data: existingProduct,
+    isLoading: isLoadingProduct,
+    isError: isProductError,
+  } = useGetInventoryItemByIdQuery(editId!, { skip: !editId });
+
+  const isSubmitting = isCreating || isUpdating;
 
   const [formData, setFormData] = useState<FormData>({
     title: "",
@@ -63,9 +88,38 @@ export function AddProductForm() {
     tags: [],
   });
 
-  const [tagInput, setTagInput] = useState("");
   const [images, setImages] = useState<ImagePreview[]>([]);
-  const [status, setStatus] = useState<"draft" | "published">("draft");
+  const [imagesToRemove, setImagesToRemove] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
+
+  // Populate form when editing
+  useEffect(() => {
+    if (isEditMode && existingProduct?.data) {
+      const poster = existingProduct.data;
+      setFormData({
+        title: poster.title || "",
+        description: poster.description || "",
+        price: poster.price?.toString() || "",
+        dimensions: poster.dimensions || "",
+        material: (poster as any).material || "",
+        stock: poster.stock?.toString() || "",
+        category: poster.category || "",
+        isAvailable: poster.isAvailable ?? true,
+        tags: poster.tags || [],
+      });
+
+      // Set existing images
+      if (poster.images && poster.images.length > 0) {
+        setImages(
+          poster.images.map((img) => ({
+            preview: img.url,
+            isExisting: true,
+            public_id: img.public_id,
+          }))
+        );
+      }
+    }
+  }, [isEditMode, existingProduct]);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -73,48 +127,46 @@ export function AddProductForm() {
     >
   ) => {
     const { name, value, type } = e.target;
-    const checked = (e.target as HTMLInputElement).checked;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]:
-        type === "checkbox"
-          ? checked
-          : type === "number"
-          ? value === ""
-            ? ""
-            : parseFloat(value)
-          : value,
-    }));
+    if (type === "checkbox") {
+      const checked = (e.target as HTMLInputElement).checked;
+      setFormData((prev) => ({ ...prev, [name]: checked }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
+    const remainingSlots = 5 - images.length;
+    const filesToAdd = files.slice(0, remainingSlots);
 
-    if (images.length + files.length > 5) {
-      toast.error("Maximum 5 images allowed");
-      return;
-    }
+    const newPreviews = filesToAdd.map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+      isExisting: false,
+    }));
 
-    files.forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImages((prev) => [
-          ...prev,
-          {
-            file,
-            preview: reader.result as string,
-          },
-        ]);
-      };
-      reader.readAsDataURL(file);
-    });
-
-    e.target.value = "";
+    setImages((prev) => [...prev, ...newPreviews]);
   };
 
   const removeImage = (index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
+    const imageToRemove = images[index];
+
+    // If it's an existing image, add to removal list
+    if (imageToRemove.isExisting && imageToRemove.public_id) {
+      setImagesToRemove((prev) => [...prev, imageToRemove.public_id!]);
+    }
+
+    // If it's a new image, revoke the object URL
+    if (!imageToRemove.isExisting && imageToRemove.preview) {
+      URL.revokeObjectURL(imageToRemove.preview);
+    }
+
+    setImages((prev) => {
+      const newImages = [...prev];
+      newImages.splice(index, 1);
+      return newImages;
+    });
   };
 
   const addTag = () => {
@@ -134,90 +186,152 @@ export function AddProductForm() {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
 
     // Validation
     if (!formData.title.trim()) {
-      toast.error("Title is required");
+      toast.error("Product name is required");
       return;
     }
-
-    if (formData.price === "" || formData.price < 0) {
-      toast.error("Valid price is required");
-      return;
-    }
-
-    if (formData.stock === "" || formData.stock < 0) {
-      toast.error("Valid stock quantity is required");
-      return;
-    }
-
     if (!formData.category) {
       toast.error("Category is required");
       return;
     }
-
     if (!formData.dimensions) {
       toast.error("Dimensions are required");
       return;
     }
-
+    if (!formData.price || parseFloat(formData.price) <= 0) {
+      toast.error("Valid price is required");
+      return;
+    }
+    if (!formData.stock || parseInt(formData.stock) < 0) {
+      toast.error("Valid stock quantity is required");
+      return;
+    }
     if (images.length === 0) {
       toast.error("At least one image is required");
       return;
     }
-
     if (formData.tags.length === 0) {
       toast.error("At least one tag is required");
       return;
     }
 
     try {
-      const formDataToSend = new FormData();
+      if (isEditMode && editId) {
+        // Update existing product
+        const newImages = images
+          .filter((img) => !img.isExisting && img.file)
+          .map((img) => img.file!);
 
-      // Add images
-      images.forEach((img) => {
-        formDataToSend.append("images", img.file);
-      });
+        const updateDetails: any = {
+          title: formData.title.trim(),
+          description: formData.description.trim(),
+          category: formData.category,
+          dimensions: formData.dimensions,
+          price: parseFloat(formData.price),
+          stock: parseInt(formData.stock),
+          isAvailable: formData.isAvailable,
+          tags: formData.tags,
+        };
 
-      // Add form fields
-      formDataToSend.append("title", formData.title);
-      formDataToSend.append("description", formData.description);
-      formDataToSend.append("price", formData.price.toString());
-      formDataToSend.append("stock", formData.stock.toString());
-      formDataToSend.append("category", formData.category);
-      formDataToSend.append("dimensions", formData.dimensions);
-      formDataToSend.append("material", formData.material);
-      formDataToSend.append("isAvailable", formData.isAvailable.toString());
-      formDataToSend.append("tags", JSON.stringify(formData.tags));
+        if (formData.material) {
+          updateDetails.material = formData.material;
+        }
 
-      const res = await addInventoryItem(formDataToSend).unwrap();
+        if (imagesToRemove.length > 0) {
+          updateDetails.imagesToDelete = imagesToRemove;
+        }
 
-      if (res) {
-        toast.success("Poster added successfully!");
+        await updateInventoryItem({
+          id: editId,
+          images: newImages,
+          updateDetails,
+        }).unwrap();
+
+        toast.success("Product updated successfully!");
+        router.push("/dashboard/products");
+      } else {
+        // Create new product
+        const itemDetails = {
+          title: formData.title.trim(),
+          description: formData.description.trim(),
+          category: formData.category,
+          dimensions: formData.dimensions,
+          price: parseFloat(formData.price),
+          stock: parseInt(formData.stock),
+          isAvailable: formData.isAvailable,
+          tags: formData.tags,
+          material: formData.material,
+        };
+
+        await createInventoryItem({
+          images: images.filter((img) => img.file).map((img) => img.file!),
+          itemDetails,
+        }).unwrap();
+
+        toast.success("Product added successfully!");
+
+        // Reset form
+        setFormData({
+          title: "",
+          description: "",
+          price: "",
+          dimensions: "",
+          material: "",
+          stock: "",
+          category: "",
+          isAvailable: true,
+          tags: [],
+        });
+        setImages([]);
+        setTagInput("");
       }
-      // Reset form
-      setFormData({
-        title: "",
-        description: "",
-        price: "",
-        dimensions: "",
-        material: "",
-        stock: "",
-        category: "",
-        isAvailable: true,
-        tags: [],
-      });
-      setImages([]);
-      setTagInput("");
-      setStatus("draft");
     } catch (err: any) {
       const errorMessage =
-        err?.data?.message || "Failed to add poster. Please try again.";
+        err?.data?.message ||
+        `Failed to ${isEditMode ? "update" : "add"} product. Please try again.`;
       toast.error(errorMessage);
     }
   };
+
+  const handleDiscard = () => {
+    if (
+      window.confirm(
+        "Are you sure you want to discard all changes? This action cannot be undone."
+      )
+    ) {
+      router.push("/dashboard/products");
+    }
+  };
+
+  // Loading state for edit mode
+  if (isEditMode && isLoadingProduct) {
+    return (
+      <div className="w-full min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+          <p className="text-muted-foreground">Loading product...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state for edit mode
+  if (isEditMode && isProductError) {
+    return (
+      <div className="w-full min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-destructive">Failed to load product</p>
+          <Button onClick={() => router.push("/dashboard/products")}>
+            Go Back
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-screen bg-background">
@@ -227,31 +341,18 @@ export function AddProductForm() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => window.history.back()}
+                onClick={() => router.push("/dashboard/products")}
                 className="p-2 hover:bg-muted rounded-lg transition"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
+                <ArrowLeft className="w-5 h-5" />
               </button>
-              <h1 className="text-2xl font-bold">Add Products</h1>
+              <h1 className="text-2xl font-bold">
+                {isEditMode ? "Edit Product" : "Add Product"}
+              </h1>
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={handleDiscard}>
                 Discard
-              </Button>
-              <Button variant="outline" size="sm">
-                Save Draft
               </Button>
               <Button
                 onClick={handleSubmit}
@@ -259,7 +360,16 @@ export function AddProductForm() {
                 size="sm"
                 className="bg-black text-white hover:bg-black/80"
               >
-                {isSubmitting ? "Publishing..." : "Publish"}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    {isEditMode ? "Updating..." : "Publishing..."}
+                  </>
+                ) : isEditMode ? (
+                  "Update Product"
+                ) : (
+                  "Publish Product"
+                )}
               </Button>
             </div>
           </div>
@@ -413,6 +523,14 @@ export function AddProductForm() {
                             alt={`Preview ${index + 1}`}
                             className="w-full h-32 object-cover rounded border"
                           />
+                          {img.isExisting && (
+                            <Badge
+                              variant="secondary"
+                              className="absolute top-2 left-2 text-xs"
+                            >
+                              Existing
+                            </Badge>
+                          )}
                           <button
                             type="button"
                             onClick={() => removeImage(index)}
@@ -479,7 +597,7 @@ export function AddProductForm() {
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="price" className="text-sm font-medium">
-                      Base Price *
+                      Base Price (₹) *
                     </Label>
                     <Input
                       id="price"
@@ -518,35 +636,22 @@ export function AddProductForm() {
                       onChange={handleInputChange}
                       className="w-4 h-4 rounded"
                     />
-                    <span className="text-sm font-medium">In stock</span>
+                    <span className="text-sm font-medium">
+                      Available for sale
+                    </span>
                   </label>
                 </div>
               </Card>
 
-              {/* Status Card */}
+              {/* Info Card */}
               <Card className="p-6">
-                <h2 className="text-lg font-semibold mb-6">Status</h2>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="status" className="text-sm font-medium">
-                      Product Status
-                    </Label>
-                    <select
-                      id="status"
-                      value={status}
-                      onChange={(e) =>
-                        setStatus(e.target.value as "draft" | "published")
-                      }
-                      className="w-full mt-2 px-3 py-2 border rounded-md text-sm bg-transparent border-input focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                    >
-                      <option value="draft">Draft</option>
-                      <option value="published">Published</option>
-                    </select>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Set the product status
-                    </p>
-                  </div>
-                </div>
+                <h2 className="text-lg font-semibold mb-4">Tips</h2>
+                <ul className="text-sm text-muted-foreground space-y-2">
+                  <li>• Use high-quality images (at least 800x800px)</li>
+                  <li>• Add relevant tags to improve searchability</li>
+                  <li>• Keep product names clear and descriptive</li>
+                  <li>• Set accurate stock quantities</li>
+                </ul>
               </Card>
             </div>
           </div>

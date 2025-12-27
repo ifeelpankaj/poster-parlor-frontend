@@ -45,7 +45,7 @@ export default function Profile() {
   };
 
   const handleOrders = () => {
-    router.push("/orders");
+    router.push("/myorder");
   };
 
   return (

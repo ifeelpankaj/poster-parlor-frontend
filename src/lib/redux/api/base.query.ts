@@ -17,7 +17,7 @@ export const baseQuery = fetchBaseQuery({
 /**
  * 🔐 In-memory refresh state (PER USER / PER TAB)
  */
-let refreshPromise: Promise<void> | null = null;
+let refreshPromise: Promise<boolean> | null = null;
 let refreshFailed = false;
 
 /**
@@ -37,14 +37,17 @@ export const baseQueryWithReauth: BaseQueryFn<
 > = async (args, api, extraOptions) => {
   let result = await baseQuery(args, api, extraOptions);
 
+  // Handle 401 Unauthorized - try to refresh token
   if (result.error?.status === 401) {
+    // If we already know refresh failed, don't try again
     if (refreshFailed) {
       api.dispatch({ type: "auth/clearAuth" });
       return result;
     }
 
+    // Only one refresh at a time
     if (!refreshPromise) {
-      refreshPromise = (async (): Promise<void> => {
+      refreshPromise = (async (): Promise<boolean> => {
         try {
           const refreshResult = await baseQuery(
             { url: "/auth/google/refresh", method: "POST" },
@@ -55,27 +58,40 @@ export const baseQueryWithReauth: BaseQueryFn<
           if (refreshResult.error || !refreshResult.data) {
             refreshFailed = true;
             api.dispatch({ type: "auth/clearAuth" });
-            throw new Error("Refresh failed");
+            return false;
           }
 
-          refreshFailed = false; // ✅ Reset on success
+          refreshFailed = false;
+          return true;
         } catch (error) {
           refreshFailed = true;
           api.dispatch({ type: "auth/clearAuth" });
-          throw error;
+          return false;
         }
       })().finally(() => {
-        refreshPromise = null;
+        // Reset promise after a short delay to allow retry
+        setTimeout(() => {
+          refreshPromise = null;
+        }, 100);
       });
     }
 
     try {
-      await refreshPromise;
-      result = await baseQuery(args, api, extraOptions);
+      const refreshSucceeded = await refreshPromise;
+      if (refreshSucceeded) {
+        // Retry the original request
+        result = await baseQuery(args, api, extraOptions);
+      }
     } catch {
       // Refresh failed, return original 401
       return result;
     }
+  }
+
+  // Handle 403 Forbidden - don't try to refresh, just return
+  if (result.error?.status === 403) {
+    // 403 means authenticated but not authorized - don't clear auth
+    return result;
   }
 
   return result;

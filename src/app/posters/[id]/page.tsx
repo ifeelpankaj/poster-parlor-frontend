@@ -1,11 +1,11 @@
 "use client";
 import React, { useState } from "react";
 import { useGetInventoryItemByIdQuery } from "@/lib/redux/api/inventory.api";
+import { useGetProductReviewsQuery } from "@/lib/redux/api/review.api";
 import { useParams } from "next/navigation";
 import { useCart } from "@/components/hooks/use-cart.hook";
 import {
   GetInventoryItemResponse,
-  Review,
   LoadingState,
   ErrorState,
   Breadcrumb,
@@ -18,40 +18,6 @@ import {
   ProductFeatures,
   ReviewsSection,
 } from "./components";
-
-// Mock reviews - replace with actual reviews API
-const MOCK_REVIEWS: Review[] = [
-  {
-    id: 1,
-    author: "Sarah Miller",
-    rating: 5,
-    date: "2 weeks ago",
-    comment:
-      "Absolutely gorgeous! The quality exceeded my expectations. The colors are vibrant and the material feels premium.",
-    verified: true,
-  },
-  {
-    id: 2,
-    author: "James Chen",
-    rating: 5,
-    date: "1 month ago",
-    comment:
-      "Perfect addition to my home office. Shipped quickly and arrived in perfect condition.",
-    verified: true,
-  },
-  {
-    id: 3,
-    author: "Emily Rodriguez",
-    rating: 4,
-    date: "1 month ago",
-    comment:
-      "Beautiful design and great quality. Would have given 5 stars but it took a bit longer to ship than expected.",
-    verified: true,
-  },
-];
-
-const MOCK_RATING = 4.8;
-const MOCK_REVIEW_COUNT = 127;
 
 const parseTags = (tags: string[]): string[] => {
   if (!tags || tags.length === 0) return [];
@@ -72,11 +38,25 @@ const PosterDetailPage = () => {
   const id = params?.id;
   const [quantity, setQuantity] = useState<number>(1);
   const [selectedImage, setSelectedImage] = useState<number>(0);
+  const [reviewPage, setReviewPage] = useState<number>(1);
   const { addToCart, isInCart, getItemQuantity } = useCart();
+
   const { data, isLoading, isError } = useGetInventoryItemByIdQuery(id) as {
     data: GetInventoryItemResponse | undefined;
     isLoading: boolean;
     isError: boolean;
+  };
+
+  const { data: reviewsData, isLoading: reviewsLoading } =
+    useGetProductReviewsQuery(
+      { posterId: id || "", page: reviewPage, limit: 10 },
+      { skip: !id }
+    );
+
+  const handleLoadMoreReviews = () => {
+    if (reviewsData?.data?.pagination?.hasNextPage) {
+      setReviewPage((prev) => prev + 1);
+    }
   };
 
   const handleQuantityChange = (type: "increment" | "decrement") => {
@@ -123,6 +103,22 @@ const PosterDetailPage = () => {
   const displayTags = parseTags(poster.tags);
   const images = poster.images.length > 0 ? poster.images : [];
 
+  // Extract review stats
+  const reviewStats = reviewsData?.data?.stats || {
+    averageRating: 0,
+    totalReviews: 0,
+    ratingDistribution: {},
+  };
+  const reviews = reviewsData?.data?.reviews || [];
+  const reviewPagination = reviewsData?.data?.pagination || {
+    currentPage: 1,
+    totalPages: 1,
+    totalReviews: 0,
+    limit: 10,
+    hasNextPage: false,
+    hasPrevPage: false,
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
@@ -143,8 +139,8 @@ const PosterDetailPage = () => {
             <ProductHeader
               title={poster.title}
               price={poster.price}
-              rating={MOCK_RATING}
-              reviewCount={MOCK_REVIEW_COUNT}
+              rating={reviewStats.averageRating}
+              reviewCount={reviewStats.totalReviews}
             />
 
             <p className="text-muted-foreground leading-relaxed text-sm md:text-base">
@@ -179,9 +175,13 @@ const PosterDetailPage = () => {
         </div>
 
         <ReviewsSection
-          reviews={MOCK_REVIEWS}
-          rating={MOCK_RATING}
-          reviewCount={MOCK_REVIEW_COUNT}
+          posterId={poster._id}
+          reviews={reviews}
+          stats={reviewStats}
+          pagination={reviewPagination}
+          isLoading={reviewsLoading}
+          onLoadMore={handleLoadMoreReviews}
+          onReviewSubmit={() => setReviewPage(1)}
         />
       </div>
     </div>

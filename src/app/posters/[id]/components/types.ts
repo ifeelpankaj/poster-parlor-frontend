@@ -32,11 +32,9 @@ export interface GetInventoryItemResponse {
   timestamp: string;
 }
 
-export interface Review {
-  id: number;
-  author: string;
-  rating: number;
-  date: string;
-  comment: string;
-  verified: boolean;
-}
+// Re-export review types from the API
+export type {
+  Review,
+  ReviewStats,
+  ReviewPagination,
+} from "@/lib/redux/api/review.api";
