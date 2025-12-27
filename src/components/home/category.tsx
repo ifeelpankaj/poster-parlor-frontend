@@ -29,7 +29,7 @@ export default function Category() {
     data?: FiltersData;
     isLoading: boolean;
   };
-
+  console.log(data);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -37,9 +37,10 @@ export default function Category() {
   const categories: Category[] =
     data?.data?.categories?.map((item) => ({
       name: item.category.charAt(0).toUpperCase() + item.category.slice(1),
-      image: categoryImageMap[item.category] || "/fallback.jpg",
+      image: categoryImageMap[item.category] || "/fallback.jpeg",
       productCount: item.count,
     })) ?? [];
+  console.log(categories);
 
   const checkScrollButtons = useCallback(() => {
     const container = scrollContainerRef.current;
@@ -244,14 +245,15 @@ export default function Category() {
 }
 
 const categoryImageMap: Record<string, string> = {
-  anime:
-    "https://res.cloudinary.com/buymybook/image/upload/v1764486496/Posters/Luffy_htrg0a.jpg",
-  bike: "https://res.cloudinary.com/buymybook/image/upload/v1764569307/Posters/bike_650_brhsbn.jpg",
-  cars: "https://res.cloudinary.com/buymybook/image/upload/v1764486496/Posters/DEFENDER_OCTA_tlumso.jpg",
-  divine:
-    "https://res.cloudinary.com/buymybook/image/upload/v1764486496/Posters/Lord_Shiva_Wallpaper_dlj9i0.jpg",
-  marvel:
+  Anime:
+    "https://res.cloudinary.com/buymybook/image/upload/v1766812177/Posters/Luffy_fnljbm.jpg",
+  Bikes:
+    "https://res.cloudinary.com/buymybook/image/upload/v1766812177/Posters/bike_dpbwhg.jpg",
+  Cars: "https://res.cloudinary.com/buymybook/image/upload/v1766812177/Posters/ford_mustang_boss_1969_xxyfy4.jpg",
+  spritual:
+    "https://res.cloudinary.com/buymybook/image/upload/v1766812177/Posters/Lord_Shiva_Wallpaper_eojx2f.jpg",
+  Marvel:
     "https://res.cloudinary.com/buymybook/image/upload/v1764569307/Posters/spiderman_s29bir.jpg",
-  sport:
-    "https://res.cloudinary.com/buymybook/image/upload/v1764486496/Posters/Ronaldo_T-shirt_Design_Football_PNG_Download_Cristiano_Ronaldo_CR7_Football_Shirt_Png_T-shirt_Sublimation__-_Etsy_j0p8sf.jpg",
+  Sports:
+    "https://res.cloudinary.com/buymybook/image/upload/v1766812177/Posters/Matchday___Gameday___Poster___Sports_graphic_design_fror4l.jpg",
 };
