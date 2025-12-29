@@ -13,12 +13,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   useLazyGetCurrentUserQuery,
   useLogoutMutation,
-} from "@/lib/redux/api/auth.api";
+} from "@/store/api/auth.api";
 import { useRouter } from "next/navigation";
 import { GoogleSignInButton } from "./auth";
-import { useAppSelector } from "@/lib/redux/store";
+import { useAppSelector } from "@/store";
 import { toast } from "sonner";
-import { ErrorResponse } from "@/lib/types/api-response.type";
+import { ErrorResponse } from "@/types/api-response.type";
 
 export default function Profile() {
   const router = useRouter();

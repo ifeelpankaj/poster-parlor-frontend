@@ -1,10 +1,10 @@
 "use client";
 
 import { use } from "react";
-import { useGetCurrentUserQuery } from "@/lib/redux/api/auth.api";
-import { useGetOrderByIdQuery } from "@/lib/redux/api/order.api";
-import { OrderDetail } from "../components";
-import { GoogleSignInButton } from "@/components/layout/header/auth";
+import { useGetCurrentUserQuery } from "@/store/api/auth.api";
+import { useGetOrderByIdQuery } from "@/store/api/order.api";
+import { OrderDetail } from "@/features/orders";
+import { GoogleSignInButton } from "@/features/auth";
 import {
   Card,
   CardContent,

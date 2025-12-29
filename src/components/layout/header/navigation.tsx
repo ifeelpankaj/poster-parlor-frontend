@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { useAppSelector } from "@/lib/redux/store";
+import { useAppSelector } from "@/store";
 
 export function Navigation() {
   const pathname = usePathname();

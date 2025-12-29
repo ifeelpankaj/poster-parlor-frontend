@@ -6,7 +6,7 @@ import {
   useCreateInventoryItemMutation,
   useUpdateInventoryItemMutation,
   useGetInventoryItemByIdQuery,
-} from "@/lib/redux/api/inventory.api";
+} from "@/store/api/inventory.api";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -336,7 +336,7 @@ export function AddProductForm() {
   return (
     <div className="w-full min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b bg-white sticky top-0 z-40">
+      <div className="border-b bg-background sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -354,12 +354,7 @@ export function AddProductForm() {
               <Button variant="outline" size="sm" onClick={handleDiscard}>
                 Discard
               </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                size="sm"
-                className="bg-black text-white hover:bg-black/80"
-              >
+              <Button onClick={handleSubmit} disabled={isSubmitting} size="sm">
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -411,7 +406,7 @@ export function AddProductForm() {
                         name="category"
                         value={formData.category}
                         onChange={handleInputChange}
-                        className="w-full mt-2 px-3 py-2 border rounded-md text-sm bg-transparent border-input focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        className="w-full mt-2 px-3 py-2 border rounded-md text-sm bg-background text-foreground border-input focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring [&>option]:bg-background [&>option]:text-foreground"
                       >
                         <option value="">Select category</option>
                         {CATEGORIES.map((cat) => (
@@ -433,7 +428,7 @@ export function AddProductForm() {
                         name="dimensions"
                         value={formData.dimensions}
                         onChange={handleInputChange}
-                        className="w-full mt-2 px-3 py-2 border rounded-md text-sm bg-transparent border-input focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        className="w-full mt-2 px-3 py-2 border rounded-md text-sm bg-background text-foreground border-input focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring [&>option]:bg-background [&>option]:text-foreground"
                       >
                         <option value="">Select dimensions</option>
                         {DIMENSIONS.map((dim) => (
@@ -454,7 +449,7 @@ export function AddProductForm() {
                       name="material"
                       value={formData.material}
                       onChange={handleInputChange}
-                      className="w-full mt-2 px-3 py-2 border rounded-md text-sm bg-transparent border-input focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      className="w-full mt-2 px-3 py-2 border rounded-md text-sm bg-background text-foreground border-input focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring [&>option]:bg-background [&>option]:text-foreground"
                     >
                       <option value="">Select material</option>
                       {MATERIALS.map((mat) => (
@@ -479,7 +474,7 @@ export function AddProductForm() {
                       onChange={handleInputChange}
                       placeholder="Set a description to the product for better visibility."
                       rows={4}
-                      className="w-full mt-2 px-3 py-2 border rounded-md text-sm bg-transparent border-input focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      className="w-full mt-2 px-3 py-2 border rounded-md text-sm bg-background text-foreground border-input focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring placeholder:text-muted-foreground"
                     />
                   </div>
                 </div>
@@ -634,7 +629,7 @@ export function AddProductForm() {
                       name="isAvailable"
                       checked={formData.isAvailable}
                       onChange={handleInputChange}
-                      className="w-4 h-4 rounded"
+                      className="w-4 h-4 rounded accent-primary"
                     />
                     <span className="text-sm font-medium">
                       Available for sale

@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, Eye, Edit, TrendingUp } from "lucide-react";
-import { useGetTopProductsQuery } from "@/lib/redux/api/admin.api";
+import { useGetTopProductsQuery } from "@/store/api/admin.api";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import Image from "next/image";

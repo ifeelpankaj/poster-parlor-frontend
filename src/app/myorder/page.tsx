@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useGetCurrentUserQuery } from "@/lib/redux/api/auth.api";
-import { useGetMyOrdersQuery } from "@/lib/redux/api/order.api";
-import { OrderList, OrderPagination } from "./components";
-import { GoogleSignInButton } from "@/components/layout/header/auth";
+import { useGetCurrentUserQuery } from "@/store/api/auth.api";
+import { useGetMyOrdersQuery } from "@/store/api/order.api";
+import { OrderList } from "@/features/orders";
+import { GoogleSignInButton } from "@/features/auth";
+import { SmartPagination } from "@/components/ui/smart-pagination";
 import {
   Card,
   CardContent,
@@ -129,9 +130,15 @@ export default function MyOrdersPage() {
 
         {/* Pagination */}
         {pagination && orders.length > 0 && (
-          <OrderPagination
-            pagination={pagination}
+          <SmartPagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalOrders}
+            itemLabel="orders"
+            hasPrev={pagination.hasPrevPage}
+            hasNext={pagination.hasNextPage}
             onPageChange={handlePageChange}
+            className="mt-6"
           />
         )}
       </div>

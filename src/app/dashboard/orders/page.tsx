@@ -12,15 +12,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { SmartPagination } from "@/components/ui/smart-pagination";
+import { EmptyState } from "@/components/ui/empty-state";
+import { TableLoadingSkeleton } from "@/components/ui/loading-skeletons";
+import { SearchInput } from "@/components/ui/search-input";
+import { PageHeader } from "@/components/ui/page-header";
 import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+  OrderStatusBadge,
+  PaymentStatusBadge,
+  getOrderStatusConfig,
+} from "@/components/ui/status-badge";
+import { LoadingButton } from "@/components/ui/loading-button";
 import {
   Select,
   SelectContent,
@@ -43,66 +45,42 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Search,
   MoreHorizontal,
   Eye,
   Truck,
   CheckCircle,
   XCircle,
   Loader2,
-  Package,
   MapPin,
   Phone,
   Mail,
   Calendar,
   CreditCard,
-  RefreshCw,
+  Package,
 } from "lucide-react";
 import {
   useGetAdminOrdersQuery,
   useGetAdminOrderByIdQuery,
   useUpdateOrderStatusMutation,
   useCancelOrderMutation,
-} from "@/lib/redux/api/admin.api";
+} from "@/store/api/admin.api";
 import {
   OrderStatus,
   OrderResponse,
   PopulatedPoster,
-} from "@/lib/redux/api/order.api";
+} from "@/store/api/order.api";
+import {
+  formatDate,
+  formatPrice,
+  formatDateTime,
+  formatOrderId,
+} from "@/lib/helpers";
 import { toast } from "sonner";
 import Image from "next/image";
 import { useSearchParams, useRouter } from "next/navigation";
 
 const ITEMS_PER_PAGE = 10;
-
-const statusConfig: Record<string, { color: string; label: string }> = {
-  PENDING: {
-    color:
-      "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-    label: "Pending",
-  },
-  PROCESSING: {
-    color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-    label: "Processing",
-  },
-  SHIPPED: {
-    color:
-      "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
-    label: "Shipped",
-  },
-  DELIVERED: {
-    color:
-      "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-    label: "Delivered",
-  },
-  CANCELLED: {
-    color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-    label: "Cancelled",
-  },
-};
 
 export default function OrdersPage() {
   const router = useRouter();
@@ -169,7 +147,9 @@ export default function OrdersPage() {
         status,
         trackingNumber: tracking,
       }).unwrap();
-      toast.success(`Order status updated to ${statusConfig[status].label}`);
+      toast.success(
+        `Order status updated to ${getOrderStatusConfig(status).label}`
+      );
       if (status === "SHIPPED") {
         setTrackingNumber("");
       }
@@ -213,50 +193,33 @@ export default function OrdersPage() {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <p className="text-destructive">Failed to load orders</p>
-        <Button onClick={() => refetch()} variant="outline">
-          <RefreshCw className="mr-2 h-4 w-4" />
+        <LoadingButton onClick={() => refetch()} variant="outline">
           Retry
-        </Button>
+        </LoadingButton>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
-          <p className="text-muted-foreground mt-1">
-            View and manage all customer orders
-          </p>
-        </div>
-        <Button
-          onClick={() => refetch()}
-          variant="outline"
-          disabled={isFetching}
-        >
-          <RefreshCw
-            className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`}
-          />
-          Refresh
-        </Button>
-      </div>
+      <PageHeader
+        title="Orders"
+        description="View and manage all customer orders"
+        showRefresh
+        onRefresh={() => refetch()}
+        isRefreshing={isFetching}
+      />
 
       {/* Filters and Search */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            {/* Search Bar */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search by customer name, email, or phone..."
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
+            <SearchInput
+              placeholder="Search by customer name, email, or phone..."
+              value={searchQuery}
+              onChange={setSearchQuery}
+              className="flex-1"
+            />
 
             {/* Status Filter */}
             <Select
@@ -291,19 +254,17 @@ export default function OrdersPage() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full" />
-              ))}
-            </div>
+            <TableLoadingSkeleton rows={5} />
           ) : orders.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No orders found</p>
-              {(debouncedSearch || statusFilter !== "all") && (
-                <p className="text-sm mt-2">Try adjusting your filters</p>
-              )}
-            </div>
+            <EmptyState
+              title="No orders found"
+              description={
+                debouncedSearch || statusFilter !== "all"
+                  ? "Try adjusting your filters"
+                  : undefined
+              }
+              size="sm"
+            />
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -323,7 +284,7 @@ export default function OrdersPage() {
                   {orders.map((order) => (
                     <TableRow key={order._id} className="hover:bg-muted/50">
                       <TableCell className="font-mono text-xs font-medium">
-                        #{order._id.slice(-8).toUpperCase()}
+                        {formatOrderId(order._id)}
                       </TableCell>
                       <TableCell>
                         <div>
@@ -337,24 +298,16 @@ export default function OrdersPage() {
                       </TableCell>
                       <TableCell>{order.items.length} items</TableCell>
                       <TableCell className="font-semibold">
-                        ₹{order.totalPrice.toLocaleString()}
+                        {formatPrice(order.totalPrice)}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={order.isPaid ? "default" : "secondary"}>
-                          {order.isPaid ? "Paid" : "Unpaid"}
-                        </Badge>
+                        <PaymentStatusBadge isPaid={order.isPaid} />
                       </TableCell>
                       <TableCell>
-                        <Badge className={statusConfig[order.status]?.color}>
-                          {statusConfig[order.status]?.label}
-                        </Badge>
+                        <OrderStatusBadge status={order.status} />
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
-                        {new Date(order.createdAt).toLocaleDateString("en-IN", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
+                        {formatDate(order.createdAt)}
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
@@ -429,69 +382,14 @@ export default function OrdersPage() {
       </Card>
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center">
-          <Pagination>
-            <PaginationContent className="gap-1">
-              <PaginationItem>
-                <PaginationPrevious
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  className={
-                    currentPage === 1
-                      ? "pointer-events-none opacity-50"
-                      : "cursor-pointer"
-                  }
-                />
-              </PaginationItem>
-
-              {Array.from({ length: totalPages }).map((_, i) => {
-                const pageNum = i + 1;
-                if (
-                  pageNum === 1 ||
-                  pageNum === totalPages ||
-                  (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
-                ) {
-                  return (
-                    <PaginationItem key={pageNum}>
-                      <PaginationLink
-                        onClick={() => setCurrentPage(pageNum)}
-                        isActive={pageNum === currentPage}
-                        className="cursor-pointer"
-                      >
-                        {pageNum}
-                      </PaginationLink>
-                    </PaginationItem>
-                  );
-                }
-                if (
-                  pageNum === currentPage - 2 ||
-                  pageNum === currentPage + 2
-                ) {
-                  return (
-                    <PaginationItem key={`ellipsis-${pageNum}`}>
-                      <PaginationEllipsis />
-                    </PaginationItem>
-                  );
-                }
-                return null;
-              })}
-
-              <PaginationItem>
-                <PaginationNext
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
-                  className={
-                    currentPage === totalPages
-                      ? "pointer-events-none opacity-50"
-                      : "cursor-pointer"
-                  }
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </div>
-      )}
+      <SmartPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={pagination?.totalOrders}
+        itemLabel="orders"
+        onPageChange={setCurrentPage}
+        className="justify-center"
+      />
 
       {/* Order Details Modal */}
       <Dialog
@@ -510,20 +408,11 @@ export default function OrdersPage() {
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-3">
-                  Order #{order._id.slice(-8).toUpperCase()}
-                  <Badge className={statusConfig[order.status]?.color}>
-                    {statusConfig[order.status]?.label}
-                  </Badge>
+                  Order {formatOrderId(order._id)}
+                  <OrderStatusBadge status={order.status} />
                 </DialogTitle>
                 <DialogDescription>
-                  Placed on{" "}
-                  {new Date(order.createdAt).toLocaleDateString("en-IN", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  Placed on {formatDateTime(order.createdAt)}
                 </DialogDescription>
               </DialogHeader>
 
@@ -612,11 +501,11 @@ export default function OrdersPage() {
                               {getItemTitle(item)}
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              Qty: {item.quantity} × ₹{item.price}
+                              Qty: {item.quantity} × {formatPrice(item.price)}
                             </p>
                           </div>
                           <div className="font-semibold">
-                            ₹{(item.quantity * item.price).toLocaleString()}
+                            {formatPrice(item.quantity * item.price)}
                           </div>
                         </div>
                       ))}
@@ -637,34 +526,33 @@ export default function OrdersPage() {
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Subtotal</span>
                         <span>
-                          ₹
-                          {(
+                          {formatPrice(
                             order.totalPrice -
-                            order.shippingCost -
-                            order.taxAmount
-                          ).toLocaleString()}
+                              order.shippingCost -
+                              order.taxAmount
+                          )}
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Shipping</span>
-                        <span>₹{order.shippingCost}</span>
+                        <span>{formatPrice(order.shippingCost)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Tax (GST)</span>
-                        <span>₹{order.taxAmount.toLocaleString()}</span>
+                        <span>{formatPrice(order.taxAmount)}</span>
                       </div>
                       <div className="flex justify-between pt-2 border-t font-semibold text-base">
                         <span>Total</span>
-                        <span>₹{order.totalPrice.toLocaleString()}</span>
+                        <span>{formatPrice(order.totalPrice)}</span>
                       </div>
                       <div className="flex justify-between pt-2">
                         <span className="text-muted-foreground">
                           Payment Method
                         </span>
-                        <Badge variant={order.isPaid ? "default" : "secondary"}>
-                          {order.paymentDetails.method} -{" "}
-                          {order.isPaid ? "Paid" : "Unpaid"}
-                        </Badge>
+                        <span className="flex items-center gap-2">
+                          {order.paymentDetails.method}
+                          <PaymentStatusBadge isPaid={order.isPaid} />
+                        </span>
                       </div>
                       {order.trackingNumber && (
                         <div className="flex justify-between pt-2">

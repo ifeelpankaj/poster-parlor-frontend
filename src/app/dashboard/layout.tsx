@@ -1,7 +1,7 @@
 "use client";
 
 import { Sidebar } from "@/components/dashboard";
-import { useAppSelector } from "@/lib/redux/store";
+import { useAppSelector } from "@/store";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loader2, ShieldAlert } from "lucide-react";

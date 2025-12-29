@@ -31,7 +31,9 @@ export function StatsCard({
           <p
             className={cn(
               "text-xs flex items-center gap-1 mt-2",
-              isPositive ? "text-green-600" : "text-red-600"
+              isPositive
+                ? "text-green-600 dark:text-green-400"
+                : "text-red-600 dark:text-red-400"
             )}
           >
             {isPositive ? (

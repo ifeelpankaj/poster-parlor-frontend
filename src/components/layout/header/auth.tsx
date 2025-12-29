@@ -1,9 +1,9 @@
-import { GoogleSignInButtonProps } from "@/lib/types/all-types";
+import { GoogleSignInButtonProps } from "@/types/components.type";
 
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
 import { toast } from "sonner";
-import { useLoginWithGoogleMutation } from "@/lib/redux/api/auth.api";
-import { ErrorResponse } from "@/lib/types/api-response.type";
+import { useLoginWithGoogleMutation } from "@/store/api/auth.api";
+import { ErrorResponse } from "@/types/api-response.type";
 
 export function GoogleSignInButton({}: GoogleSignInButtonProps) {
   const [loginWithGoogle] = useLoginWithGoogleMutation();

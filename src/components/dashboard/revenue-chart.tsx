@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useGetRevenueAnalyticsQuery } from "@/lib/redux/api/admin.api";
+import { useGetRevenueAnalyticsQuery } from "@/store/api/admin.api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";

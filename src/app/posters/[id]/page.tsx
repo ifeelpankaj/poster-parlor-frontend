@@ -1,9 +1,9 @@
 "use client";
 import React, { useState } from "react";
-import { useGetInventoryItemByIdQuery } from "@/lib/redux/api/inventory.api";
-import { useGetProductReviewsQuery } from "@/lib/redux/api/review.api";
+import { useGetInventoryItemByIdQuery } from "@/store/api/inventory.api";
+import { useGetProductReviewsQuery } from "@/store/api/review.api";
 import { useParams } from "next/navigation";
-import { useCart } from "@/components/hooks/use-cart.hook";
+import { useCart } from "@/features/cart";
 import {
   GetInventoryItemResponse,
   LoadingState,
@@ -17,7 +17,7 @@ import {
   AddToCartButton,
   ProductFeatures,
   ReviewsSection,
-} from "./components";
+} from "@/features/poster-detail";
 
 const parseTags = (tags: string[]): string[] => {
   if (!tags || tags.length === 0) return [];

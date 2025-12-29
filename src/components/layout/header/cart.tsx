@@ -23,8 +23,8 @@ import {
   ChevronRight,
   Package,
 } from "lucide-react";
-import { useCart } from "@/components/hooks/use-cart.hook";
-import { CartItem } from "@/lib/redux/slice/cart.slice";
+import { useCart } from "@/features/cart";
+import { CartItem } from "@/store/slices/cart.slice";
 
 interface CartButtonProps {
   cartOpen: boolean;

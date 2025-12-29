@@ -4,17 +4,19 @@ import React, { Suspense, useMemo } from "react";
 import {
   useGetAllInventoryQuery,
   useGetAllFiltersQuery,
-} from "@/lib/redux/api/inventory.api";
+} from "@/store/api/inventory.api";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { EmptyState } from "@/components/ui/empty-state";
+import { GridLoadingSkeleton } from "@/components/ui/loading-skeletons";
+import { SmartPagination } from "@/components/ui/smart-pagination";
 
-import { usePostersFilters } from "./hooks/usePostersFilters";
-import { SearchHeader } from "./components/SearchHeader";
-import { ActiveFilters } from "./components/ActiveFilter";
-import { LoadingSkeleton } from "./components/LoadingSkeleton";
-import { EmptyState } from "./components/EmptyState";
-import { PostersGrid } from "./components/PostersGrid";
-import { Pagination } from "./components/PostersPagination";
+import {
+  usePostersFilters,
+  SearchHeader,
+  ActiveFilters,
+  PostersGrid,
+} from "@/features/posters";
 
 function PostersContent() {
   const {
@@ -103,7 +105,7 @@ function PostersContent() {
 
         {/* Content */}
         {isLoading || isFetching ? (
-          <LoadingSkeleton count={limit} />
+          <GridLoadingSkeleton count={limit} />
         ) : error ? (
           <Alert variant="destructive" className="max-w-2xl mx-auto">
             <AlertCircle className="h-4 w-4" />
@@ -112,16 +114,24 @@ function PostersContent() {
             </AlertDescription>
           </Alert>
         ) : posters.length === 0 ? (
-          <EmptyState onClear={handleClearFilters} />
+          <EmptyState
+            title="No posters found"
+            description="We couldn't find any posters matching your criteria. Try adjusting your filters."
+            actionLabel="Clear All Filters"
+            onAction={handleClearFilters}
+          />
         ) : (
           <>
             <PostersGrid posters={posters} />
-            <Pagination
-              page={page}
+            <SmartPagination
+              currentPage={page}
               totalPages={totalPages}
               hasPrev={pagination?.hasPrev}
               hasNext={pagination?.hasNext}
+              totalItems={pagination?.total}
+              itemLabel="posters"
               onPageChange={setPage}
+              className="mt-6 sm:mt-8"
             />
           </>
         )}
@@ -133,7 +143,7 @@ function PostersContent() {
 export default function PostersPage() {
   return (
     <main className="min-h-screen bg-background">
-      <Suspense fallback={<LoadingSkeleton count={12} />}>
+      <Suspense fallback={<GridLoadingSkeleton count={12} />}>
         <PostersContent />
       </Suspense>
     </main>

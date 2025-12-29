@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -12,15 +12,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { SmartPagination } from "@/components/ui/smart-pagination";
+import { EmptyState } from "@/components/ui/empty-state";
+import { TableLoadingSkeleton } from "@/components/ui/loading-skeletons";
+import { SearchInput } from "@/components/ui/search-input";
+import { PageHeader } from "@/components/ui/page-header";
 import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+  StockStatusBadge,
+  ActiveStatusBadge,
+} from "@/components/ui/status-badge";
+import { LoadingButton } from "@/components/ui/loading-button";
+import { formatPrice } from "@/lib/helpers";
 import {
   Select,
   SelectContent,
@@ -53,17 +55,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Plus,
-  Search,
   MoreHorizontal,
   Eye,
   Edit,
   Trash2,
   Package,
-  RefreshCw,
   Loader2,
   ImageIcon,
   ExternalLink,
@@ -75,7 +73,7 @@ import {
   useSoftDeleteInventoryItemMutation,
   useGetAllFiltersQuery,
   Poster,
-} from "@/lib/redux/api/inventory.api";
+} from "@/store/api/inventory.api";
 import { toast } from "sonner";
 import Image from "next/image";
 import Link from "next/link";
@@ -158,56 +156,40 @@ export default function ProductsPage() {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <p className="text-destructive">Failed to load products</p>
-        <Button onClick={() => refetch()} variant="outline">
-          <RefreshCw className="mr-2 h-4 w-4" />
+        <LoadingButton onClick={() => refetch()} variant="outline">
           Retry
-        </Button>
+        </LoadingButton>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Products</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage your poster collection
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => refetch()}
-            variant="outline"
-            disabled={isFetching}
-          >
-            <RefreshCw
-              className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`}
-            />
-            Refresh
-          </Button>
+      <PageHeader
+        title="Products"
+        description="Manage your poster collection"
+        icon={Package}
+        showRefresh
+        onRefresh={() => refetch()}
+        isRefreshing={isFetching}
+        actions={
           <Button onClick={handleOnAddProduct}>
             <Plus className="mr-2 h-4 w-4" />
             Add Product
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Filters and Search */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            {/* Search Bar */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search products by name..."
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
+            <SearchInput
+              placeholder="Search products by name..."
+              value={searchQuery}
+              onChange={setSearchQuery}
+              className="flex-1"
+            />
 
             {/* Category Filter */}
             <Select
@@ -242,23 +224,19 @@ export default function ProductsPage() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full" />
-              ))}
-            </div>
+            <TableLoadingSkeleton rows={5} />
           ) : products.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No products found</p>
-              {(debouncedSearch || categoryFilter !== "all") && (
-                <p className="text-sm mt-2">Try adjusting your filters</p>
-              )}
-              <Button onClick={handleOnAddProduct} className="mt-4">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Your First Product
-              </Button>
-            </div>
+            <EmptyState
+              title="No products found"
+              description={
+                debouncedSearch || categoryFilter !== "all"
+                  ? "Try adjusting your filters"
+                  : undefined
+              }
+              secondaryActionLabel="Add Your First Product"
+              onSecondaryAction={handleOnAddProduct}
+              size="sm"
+            />
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -305,36 +283,17 @@ export default function ProductsPage() {
                         <Badge variant="secondary">{product.category}</Badge>
                       </TableCell>
                       <TableCell className="font-semibold">
-                        ₹{product.price}
+                        {formatPrice(product.price)}
                       </TableCell>
                       <TableCell>
-                        <span
-                          className={
-                            product.stock <= 10
-                              ? "text-red-500 font-medium"
-                              : ""
-                          }
-                        >
-                          {product.stock}
-                        </span>
-                        {product.stock <= 10 && product.stock > 0 && (
-                          <span className="text-xs text-yellow-600 ml-1">
-                            (Low)
-                          </span>
-                        )}
+                        <StockStatusBadge stock={product.stock} />
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          variant={
-                            product.isAvailable && product.stock > 0
-                              ? "default"
-                              : "destructive"
-                          }
-                        >
-                          {product.isAvailable && product.stock > 0
-                            ? "Active"
-                            : "Out of Stock"}
-                        </Badge>
+                        <ActiveStatusBadge
+                          isActive={product.isAvailable && product.stock > 0}
+                          activeLabel="Active"
+                          inactiveLabel="Out of Stock"
+                        />
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
@@ -394,69 +353,14 @@ export default function ProductsPage() {
       </Card>
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center">
-          <Pagination>
-            <PaginationContent className="gap-1">
-              <PaginationItem>
-                <PaginationPrevious
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  className={
-                    currentPage === 1
-                      ? "pointer-events-none opacity-50"
-                      : "cursor-pointer"
-                  }
-                />
-              </PaginationItem>
-
-              {Array.from({ length: totalPages }).map((_, i) => {
-                const pageNum = i + 1;
-                if (
-                  pageNum === 1 ||
-                  pageNum === totalPages ||
-                  (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
-                ) {
-                  return (
-                    <PaginationItem key={pageNum}>
-                      <PaginationLink
-                        onClick={() => setCurrentPage(pageNum)}
-                        isActive={pageNum === currentPage}
-                        className="cursor-pointer"
-                      >
-                        {pageNum}
-                      </PaginationLink>
-                    </PaginationItem>
-                  );
-                }
-                if (
-                  pageNum === currentPage - 2 ||
-                  pageNum === currentPage + 2
-                ) {
-                  return (
-                    <PaginationItem key={`ellipsis-${pageNum}`}>
-                      <PaginationEllipsis />
-                    </PaginationItem>
-                  );
-                }
-                return null;
-              })}
-
-              <PaginationItem>
-                <PaginationNext
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
-                  className={
-                    currentPage === totalPages
-                      ? "pointer-events-none opacity-50"
-                      : "cursor-pointer"
-                  }
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </div>
-      )}
+      <SmartPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={pagination?.total}
+        itemLabel="products"
+        onPageChange={setCurrentPage}
+        className="justify-center"
+      />
 
       {/* Product Details Modal */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>

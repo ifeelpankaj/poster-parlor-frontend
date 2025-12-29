@@ -3,24 +3,27 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useGetCurrentUserQuery } from "@/lib/redux/api/auth.api";
+import { useGetCurrentUserQuery } from "@/store/api/auth.api";
 import {
   useCreateOrderMutation,
   useInitiatePaymentMutation,
   useVerifyPaymentMutation,
-} from "@/lib/redux/api/order.api";
-import { useAppSelector, useAppDispatch } from "@/lib/redux/store";
+} from "@/store/api/order.api";
+import { useAppSelector, useAppDispatch } from "@/store";
 import {
   selectCartItems,
   selectCartSubtotal,
   clearCart,
-} from "@/lib/redux/slice/cart.slice";
-import { calculateOrderTotal } from "@/lib/utils/pricing.utils";
-import { useRazorpay } from "@/components/hooks/use-razorpay.hook";
-import type { RazorpaySuccessResponse } from "@/components/hooks/use-razorpay.hook";
-import { UserCheck } from "./components/user-check";
-import CheckoutForm, { type CheckoutFormData } from "./components/form";
-import { OrderSummary } from "./components/order-summary";
+} from "@/store/slices/cart.slice";
+import { calculateOrderTotal } from "@/lib/helpers";
+import {
+  useRazorpay,
+  type RazorpaySuccessResponse,
+  UserCheck,
+  CheckoutForm,
+  type CheckoutFormData,
+  OrderSummary,
+} from "@/features/checkout";
 import { ShoppingBag, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";

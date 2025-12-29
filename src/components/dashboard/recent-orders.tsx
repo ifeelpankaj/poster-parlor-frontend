@@ -9,7 +9,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import {
+  OrderStatusBadge,
+  getOrderStatusConfig,
+} from "@/components/ui/status-badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,37 +32,12 @@ import {
 import {
   useGetRecentOrdersQuery,
   useUpdateOrderStatusMutation,
-} from "@/lib/redux/api/admin.api";
-import { OrderStatus } from "@/lib/redux/api/order.api";
+} from "@/store/api/admin.api";
+import { OrderStatus } from "@/store/api/order.api";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { toast } from "sonner";
-
-const statusConfig: Record<string, { color: string; label: string }> = {
-  PENDING: {
-    color:
-      "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-    label: "Pending",
-  },
-  PROCESSING: {
-    color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-    label: "Processing",
-  },
-  SHIPPED: {
-    color:
-      "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
-    label: "Shipped",
-  },
-  DELIVERED: {
-    color:
-      "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-    label: "Delivered",
-  },
-  CANCELLED: {
-    color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-    label: "Cancelled",
-  },
-};
+import { formatPrice, formatDate, formatOrderId } from "@/lib/helpers";
 
 export function RecentOrders() {
   const { data, isLoading, error } = useGetRecentOrdersQuery(10);
@@ -71,7 +49,9 @@ export function RecentOrders() {
   const handleStatusUpdate = async (orderId: string, status: OrderStatus) => {
     try {
       await updateStatus({ orderId, status }).unwrap();
-      toast.success(`Order status updated to ${status}`);
+      toast.success(
+        `Order status updated to ${getOrderStatusConfig(status).label}`
+      );
     } catch (error) {
       toast.error("Failed to update order status");
     }
@@ -141,7 +121,7 @@ export function RecentOrders() {
               {orders.map((order) => (
                 <TableRow key={order._id}>
                   <TableCell className="font-medium font-mono text-xs">
-                    #{order._id.slice(-8).toUpperCase()}
+                    {formatOrderId(order._id)}
                   </TableCell>
                   <TableCell>
                     <div>
@@ -155,19 +135,13 @@ export function RecentOrders() {
                   </TableCell>
                   <TableCell>{order.items.length} items</TableCell>
                   <TableCell className="font-medium">
-                    ₹{order.totalPrice.toLocaleString()}
+                    {formatPrice(order.totalPrice)}
                   </TableCell>
                   <TableCell>
-                    <Badge className={statusConfig[order.status]?.color || ""}>
-                      {statusConfig[order.status]?.label || order.status}
-                    </Badge>
+                    <OrderStatusBadge status={order.status} />
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm">
-                    {new Date(order.createdAt).toLocaleDateString("en-IN", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
+                    {formatDate(order.createdAt)}
                   </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>

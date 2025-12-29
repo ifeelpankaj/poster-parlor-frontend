@@ -6,6 +6,7 @@ import {
   RevenueChart,
   TopProducts,
 } from "@/components/dashboard";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   ShoppingCart,
   Users,
@@ -16,12 +17,18 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
-import { useGetDashboardStatsQuery } from "@/lib/redux/api/admin.api";
+import { useGetDashboardStatsQuery } from "@/store/api/admin.api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function DashboardPage() {
-  const { data: statsData, isLoading, error } = useGetDashboardStatsQuery();
+  const {
+    data: statsData,
+    isLoading,
+    error,
+    refetch,
+    isFetching,
+  } = useGetDashboardStatsQuery();
   const stats = statsData?.data;
 
   if (isLoading) {
@@ -55,12 +62,13 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground mt-1">
-          Welcome back! Here's your store performance overview.
-        </p>
-      </div>
+      <PageHeader
+        title="Dashboard"
+        description="Welcome back! Here's your store performance overview."
+        showRefresh
+        onRefresh={() => refetch()}
+        isRefreshing={isFetching}
+      />
 
       {/* Primary Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -98,11 +106,11 @@ export default function DashboardPage() {
                 <p className="text-sm font-medium text-muted-foreground">
                   Pending
                 </p>
-                <p className="text-2xl font-bold text-yellow-600">
+                <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                   {stats?.pendingOrders || 0}
                 </p>
               </div>
-              <Clock className="h-8 w-8 text-yellow-600/20" />
+              <Clock className="h-8 w-8 text-yellow-600/20 dark:text-yellow-400/20" />
             </div>
           </CardContent>
         </Card>
@@ -113,11 +121,11 @@ export default function DashboardPage() {
                 <p className="text-sm font-medium text-muted-foreground">
                   Processing
                 </p>
-                <p className="text-2xl font-bold text-blue-600">
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                   {stats?.processingOrders || 0}
                 </p>
               </div>
-              <Package className="h-8 w-8 text-blue-600/20" />
+              <Package className="h-8 w-8 text-blue-600/20 dark:text-blue-400/20" />
             </div>
           </CardContent>
         </Card>
@@ -128,11 +136,11 @@ export default function DashboardPage() {
                 <p className="text-sm font-medium text-muted-foreground">
                   Shipped
                 </p>
-                <p className="text-2xl font-bold text-purple-600">
+                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                   {stats?.shippedOrders || 0}
                 </p>
               </div>
-              <Truck className="h-8 w-8 text-purple-600/20" />
+              <Truck className="h-8 w-8 text-purple-600/20 dark:text-purple-400/20" />
             </div>
           </CardContent>
         </Card>
@@ -143,11 +151,11 @@ export default function DashboardPage() {
                 <p className="text-sm font-medium text-muted-foreground">
                   Delivered
                 </p>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                   {stats?.deliveredOrders || 0}
                 </p>
               </div>
-              <CheckCircle className="h-8 w-8 text-green-600/20" />
+              <CheckCircle className="h-8 w-8 text-green-600/20 dark:text-green-400/20" />
             </div>
           </CardContent>
         </Card>
@@ -158,11 +166,11 @@ export default function DashboardPage() {
                 <p className="text-sm font-medium text-muted-foreground">
                   Cancelled
                 </p>
-                <p className="text-2xl font-bold text-red-600">
+                <p className="text-2xl font-bold text-red-600 dark:text-red-400">
                   {stats?.cancelledOrders || 0}
                 </p>
               </div>
-              <XCircle className="h-8 w-8 text-red-600/20" />
+              <XCircle className="h-8 w-8 text-red-600/20 dark:text-red-400/20" />
             </div>
           </CardContent>
         </Card>
