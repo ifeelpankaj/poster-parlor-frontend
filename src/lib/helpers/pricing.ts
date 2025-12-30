@@ -86,20 +86,6 @@ export function calculateOrderTotal(
 }
 
 /**
- * Format price in Indian Rupees
- * @param amount - Amount to format
- * @returns Formatted string with ₹ symbol
- */
-export function formatPrice(amount: number): string {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(amount);
-}
-
-/**
  * Get shipping message for UI
  * @param subtotal - Cart subtotal
  * @returns Message about shipping status
