@@ -47,7 +47,7 @@ export function Logo() {
     <div
       ref={logoRef}
       className={cn(
-        `flex items-center gap-0.5 cursor-pointer select-none ${logoFont.className} transition-colors`
+        `flex items-center gap-0.5 cursor-pointer select-none ${logoFont.className} transition-colors overflow-visible py-2`
       )}
       style={{
         fontSize: "1.5rem",
@@ -58,7 +58,7 @@ export function Logo() {
       {text.split("").map((char, index) => (
         <span
           key={index}
-          className="letter inline-block text-gray-800 dark:bg-gradient-to-r dark:from-white dark:to-gray-300 dark:bg-clip-text dark:text-transparent"
+          className="letter inline-block text-gray-800 dark:text-white"
           style={{
             opacity: 0,
           }}

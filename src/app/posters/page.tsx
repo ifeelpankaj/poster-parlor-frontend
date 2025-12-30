@@ -110,7 +110,12 @@ function PostersContent() {
           <Alert variant="destructive" className="max-w-2xl mx-auto">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Failed to load posters. Please try again later.
+              {"data" in error &&
+              error.data &&
+              typeof error.data === "object" &&
+              "message" in error.data
+                ? (error.data as { message: string }).message
+                : "Failed to load posters. Please try again later."}
             </AlertDescription>
           </Alert>
         ) : posters.length === 0 ? (

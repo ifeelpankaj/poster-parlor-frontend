@@ -58,7 +58,7 @@ export function MobileMenu({ mobileOpen, setMobileOpen }: MobileMenuProps) {
   };
 
   const handleOrders = () => {
-    router.push("/orders");
+    router.push("/myorder");
     setMobileOpen(false);
   };
 

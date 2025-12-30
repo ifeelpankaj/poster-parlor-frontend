@@ -192,14 +192,8 @@ export const inventoryApi = createApi({
           body: formData,
         };
       },
-      transformResponse: (response: CreateInventoryResponse) => {
-        console.log("✅ Create Inventory Response:", response);
-        return response;
-      },
-      transformErrorResponse: (error) => {
-        console.error("❌ Create Inventory Error:", error);
-        return error;
-      },
+      transformResponse: (response: CreateInventoryResponse) => response,
+      transformErrorResponse: (error) => error,
       invalidatesTags: ["Inventory"],
     }),
 
@@ -234,14 +228,8 @@ export const inventoryApi = createApi({
           sortOrder: filters.sortOrder,
         });
       },
-      transformResponse: (response: GetAllInventoryResponse) => {
-        console.log("✅ Get All Inventory Response:", response);
-        return response;
-      },
-      transformErrorResponse: (error) => {
-        console.error("❌ Get All Inventory Error:", error);
-        return error;
-      },
+      transformResponse: (response: GetAllInventoryResponse) => response,
+      transformErrorResponse: (error) => error,
       providesTags: (result) =>
         result
           ? [
@@ -257,14 +245,8 @@ export const inventoryApi = createApi({
     // Get inventory item by ID
     getInventoryItemById: builder.query<GetInventoryItemResponse, string>({
       query: (id) => `/inventory/${id}`,
-      transformResponse: (response: GetInventoryItemResponse) => {
-        console.log("✅ Get Inventory Item Response:", response);
-        return response;
-      },
-      transformErrorResponse: (error) => {
-        console.error("❌ Get Inventory Item Error:", error);
-        return error;
-      },
+      transformResponse: (response: GetInventoryItemResponse) => response,
+      transformErrorResponse: (error) => error,
       providesTags: (result, error, id) => [{ type: "Inventory", id }],
     }),
 
@@ -275,14 +257,8 @@ export const inventoryApi = createApi({
     >({
       query: ({ query, limit = 20 }) =>
         `/search?q=${encodeURIComponent(query)}&limit=${limit}`,
-      transformResponse: (response: SearchInventoryResponse) => {
-        console.log("✅ Search Inventory Response:", response);
-        return response;
-      },
-      transformErrorResponse: (error) => {
-        console.error("❌ Search Inventory Error:", error);
-        return error;
-      },
+      transformResponse: (response: SearchInventoryResponse) => response,
+      transformErrorResponse: (error) => error,
     }),
 
     // Update inventory item
@@ -315,14 +291,8 @@ export const inventoryApi = createApi({
           body: formData,
         };
       },
-      transformResponse: (response: UpdateInventoryResponse) => {
-        console.log("✅ Update Inventory Response:", response);
-        return response;
-      },
-      transformErrorResponse: (error) => {
-        console.error("❌ Update Inventory Error:", error);
-        return error;
-      },
+      transformResponse: (response: UpdateInventoryResponse) => response,
+      transformErrorResponse: (error) => error,
       invalidatesTags: (result, error, { id }) => [
         { type: "Inventory", id },
         { type: "Inventory", id: "LIST" },
@@ -337,14 +307,8 @@ export const inventoryApi = createApi({
     // Get all filters/categories
     getAllFilters: builder.query<FiltersResponse, void>({
       query: () => "inventory/categories/list",
-      transformResponse: (response: FiltersResponse) => {
-        console.log("✅ Get Filters Response:", response);
-        return response;
-      },
-      transformErrorResponse: (error) => {
-        console.error("❌ Get Filters Error:", error);
-        return error;
-      },
+      transformResponse: (response: FiltersResponse) => response,
+      transformErrorResponse: (error) => error,
       providesTags: ["Filters"],
     }),
 
@@ -354,14 +318,8 @@ export const inventoryApi = createApi({
         url: `/inventory/${id}`,
         method: "DELETE",
       }),
-      transformResponse: (response: DeleteInventoryResponse) => {
-        console.log("✅ Soft Delete Inventory Response:", response);
-        return response;
-      },
-      transformErrorResponse: (error) => {
-        console.error("❌ Soft Delete Inventory Error:", error);
-        return error;
-      },
+      transformResponse: (response: DeleteInventoryResponse) => response,
+      transformErrorResponse: (error) => error,
       invalidatesTags: (result, error, id) => [
         { type: "Inventory", id },
         { type: "Inventory", id: "LIST" },
@@ -374,14 +332,8 @@ export const inventoryApi = createApi({
         url: `/inventory/${id}/hard`,
         method: "DELETE",
       }),
-      transformResponse: (response: DeleteInventoryResponse) => {
-        console.log("✅ Hard Delete Inventory Response:", response);
-        return response;
-      },
-      transformErrorResponse: (error) => {
-        console.error("❌ Hard Delete Inventory Error:", error);
-        return error;
-      },
+      transformResponse: (response: DeleteInventoryResponse) => response,
+      transformErrorResponse: (error) => error,
       invalidatesTags: ["Inventory"],
     }),
   }),
